@@ -46,6 +46,12 @@ async function run() {
       }
     });
 
+    app.post("/jobs", async(req, res) => {
+      const job = req.body;
+      const result = await jobCollection.insertOne(job);
+      res.send(result);
+    })
+
     //!job applications
     app.get("/job-application", async (req, res) => {
       const email = req.query.email;
