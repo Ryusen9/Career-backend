@@ -1,4 +1,6 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
@@ -7,7 +9,13 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 //middleware
 app.use(express.json());
-app.use(cors());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 
 const user = process.env.DB_USER;
 const password = process.env.DB_PASS;
@@ -29,6 +37,18 @@ async function run() {
     const jobApplicationCollection = client
       .db("careerPortal")
       .collection("job-applications");
+    //Auth Related API
+
+    app.post("/jwt", async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "1h" });
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: false,
+        })
+        .send({ success: true });
+    });
 
     app.get("/jobs", async (req, res) => {
       const cursor = jobCollection.find();
@@ -46,11 +66,11 @@ async function run() {
       }
     });
 
-    app.post("/jobs", async(req, res) => {
+    app.post("/jobs", async (req, res) => {
       const job = req.body;
       const result = await jobCollection.insertOne(job);
       res.send(result);
-    })
+    });
 
     //!job applications
     app.get("/job-application", async (req, res) => {
