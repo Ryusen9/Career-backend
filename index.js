@@ -19,7 +19,6 @@ app.use(
 
 // Logger Middleware
 const logger = (req, res, next) => {
-  console.log("Inside the logger");
   next();
 };
 
@@ -54,8 +53,6 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-    console.log("Connected to MongoDB!");
-
     const jobCollection = client.db("careerPortal").collection("jobCollection");
     const jobApplicationCollection = client
       .db("careerPortal")
@@ -64,7 +61,7 @@ async function run() {
     // 🔐 Generate and Set JWT Token
     app.post("/jwt", async (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "1h" });
+      const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: "5h" });
       res
         .cookie("token", token, {
           httpOnly: true,
@@ -73,9 +70,17 @@ async function run() {
         .send({ success: true });
     });
 
+    app.post("/logout", (req, res) => {
+      res
+        .clearCookie("token", {
+          httpOnly: true,
+          secure: false,
+        })
+        .send({ success: true });
+    });
+
     // 📝 Get All Jobs
     app.get("/jobs", async (req, res) => {
-      console.log("Now inside API callback");
       const result = await jobCollection.find().toArray();
       res.send(result);
     });
